@@ -1,5 +1,65 @@
 # Redux Observable
 
+State management
+
+<img src="./res/redux.png" width="448" />
+
+[Image Source](https://blog.quizup.com/react-in-retrospective-quizup-db1dcc0dc8a1)
+
+Asynchronous? Nope
+
+`redux-thunk` comes into play here!
+
+It allows us to have our actions return a method. That method takes in `dispatch`, which we can use to do async operations. 
+
+```javascript
+export function getData(){
+    return (dispatch) => {
+        //Make API Call
+        setTimeout(() => {
+            dispatch({type: DATA_AVAILABLE, data:someData});
+        }, 2000);
+    };
+}
+```
+
+Instead of doing this
+
+```javascript
+export function getData(){
+    return {type: DATA_AVAILABLE, data:data};
+}
+```
+
+Dispatch transfers our data/action to reducers. 
+
+`redux-thunk` => Middleware
+
+`redux-observable` => Alternative Middleware for doing (better) async
+
+The only thing that changes is our actions. 
+
+We create something called `epics` instead of direct action methods. 
+
+```javascript
+export const loadReposEpic = action$ =>
+  action$.ofType(LOADING).switchMap(action =>
+    ajax("https://api.github.com/users/ahmedrizwan/repos")
+      .map(payload => ({
+        type: SUCCESS,
+        payload: payload.response
+      }))
+      .catch(payload => ({
+        type: ERROR
+      }))
+  );
+```
+`SwitchMap implicitly switches the request whenever a new one comes in!`
+
+`redux-observable` gives us the ability to cancel calls! Which isn't possible with Promises! 
+
+Promises => Guaranteed Future!
+
 ### Create a component
 
 1.  Map state to props
@@ -22,24 +82,6 @@ const mapDispatchToProps = { loadRepos };
 
 export default connect(mapStateToProps, mapDispatchToProps)(MyComponent);
 ```
-
-### Epics are our middleware in redux-observable, so create an `epic`
-
-```javascript
-export const loadReposEpic = action$ =>
-  action$.ofType(LOADING).switchMap(action =>
-    ajax("https://api.github.com/users/ahmedrizwan/repos")
-      .map(payload => ({
-        type: SUCCESS,
-        payload: payload.response
-      }))
-      .catch(payload => ({
-        type: ERROR
-      }))
-  );
-```
-
-`SwitchMap implicitly switches the request whenever a new one comes in!`
 
 ### Create Reducer
 
