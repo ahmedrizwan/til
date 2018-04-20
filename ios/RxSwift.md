@@ -2,6 +2,25 @@
 
 https://github.com/ReactiveX/RxSwift
 
+### Model
+```swift
+class Repository: Mappable {
+    var identifier: Int!
+    var language: String!
+    var url: String!
+    var name: String!
+    
+    required init?(map: Map) { }
+    
+    func mapping(map: Map) {
+        identifier <- map["id"]
+        language <- map["language"]
+        url <- map["url"]
+        name <- map["name"]
+    }
+}
+```
+
 ### Observables
 
 ```swift
@@ -21,12 +40,16 @@ func fetchRepositories() -> Observable<[Repository]> {
             .do(onNext: { response in
                 UIApplication.shared.isNetworkActivityIndicatorVisible = true
             })
-            .flatMapLatest { text in // .background thread, network request
+            .flatMapLatest { text in
                 return RxAlamofire
                     .requestJSON(.get, "https://api.github.com/users/\(text)/repos")
+                    .catchError({ (error) -> Observable<(HTTPURLResponse, Any)> in
+                        // Handle error here!
+                        UIApplication.shared.isNetworkActivityIndicatorVisible = false
+                        return Observable.empty()
+                    })
             }
             .map { (response, json) -> [Repository] in // again back to .background, map objects
-                print("Mapping")
                 if let repos = Mapper<Repository>().mapArray(JSONObject: json) {
                     return repos
                 } else {
@@ -52,16 +75,12 @@ repositoryObservable
                 self.present(alert, animated: true, completion: nil)
             }
         }
-    }, onError: {(error) in
-        UIApplication.shared.isNetworkActivityIndicatorVisible = false
-        print(error)
     })
     .addDisposableTo(disposeBag)
 ```
 
 ```swift
 repositoryObservable
-    .catchErrorJustReturn([])
     .bindTo(tableView.rx.items(cellIdentifier: "repositoryCell")) { _, repository, cell in
         cell.textLabel?.text = repository.name
     }
