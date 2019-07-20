@@ -2,7 +2,7 @@
 
 State management
 
-<img src="./res/redux.png" width="448" />
+<img src="./redux.png" width="448" />
 
 [Image Source](https://blog.quizup.com/react-in-retrospective-quizup-db1dcc0dc8a1)
 
